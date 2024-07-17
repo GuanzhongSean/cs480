@@ -1,0 +1,23 @@
+# CS480 Assignment 3
+
+## Usage
+
+For Ex2.3/2.4 `AdaBoost` Implementation
+```
+python3.10 adaboost.py
+```
+`adaboost.py` is using $h_j(x) = \mathrm{sign}(x_j-m_j)$ where $m_j$ is the median value of the $j$-th feature in the training set.
+
+I implemented the optimal $h_j(x)$ derived from Ex2.2:
+```
+python3.10 adaboost_optimal.py
+```
+However, the plots generated are weird and I guess the reason is the numbers of sample labeled with 0 (-1) and 1 are not balanced (0:1 = 15637:4363) in the Default training set. Thus, most weak learners typically pick an edge case to classify all samples as 0 (-1) and getting a relatively low error rate (0.21815=4363/20000) just because there are much fewer samples are label with 1. As a result, I am still using the plots generated using median weak learners.
+
+## Student Info
+
+**Name:** Jiaze Xiao
+
+**Student Number:** 20933691
+
+**Email:** j76xiao@uwaterloo.ca
