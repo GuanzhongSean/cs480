@@ -1,0 +1,5 @@
+__pycache__
+a2.*
+!a2.tex
+ex2-cnn/plots/
+data/
