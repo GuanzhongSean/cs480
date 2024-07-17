@@ -1,0 +1,9 @@
+__pycache__/
+a4.*
+!a4.tex
+j76xiao/
+*test*
+*.pdf
+!a4-wgan-print.pdf
+plot/ex2/
+data/
