@@ -4,4 +4,11 @@ report/project.*
 !report/project.sty
 !report/project.bib
 cs-480-2024-spring.zip
-submission.csv
+submission*.csv
+6PlantTraitsPredict.py
+6PlantTraitsPredict.pdf
+cs480-sping-2024-image-embeddings*/
+*.npy
+catboost_info/
+project.zip
+j76xiao/

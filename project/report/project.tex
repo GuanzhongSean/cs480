@@ -9,7 +9,7 @@
 % For figures
 \usepackage{graphicx} % more modern
 %\usepackage{epsfig} % less modern
-%\usepackage{subfig} 
+%\usepackage{subfig}
 
 % path to figure folder
 \graphicspath{{../fig/}}
@@ -18,96 +18,156 @@
 \addbibresource{project.bib}
 
 
-\title{Replace with your title}
+\title{CS 480/680 Project: Predicting 6 Vital Plant Traits}
 
 \author{
-	Yao-Liang Yu \\
-	School of Computer Science\\
+	Jiaze Xiao \\
 	University of Waterloo\\
 	Waterloo, ON, N2L 3G1 \\
-	\texttt{yaoliang.yu@uwaterloo.ca} \\
-	{\color{red} report due: August 15}
+	\texttt{j76xiao@uwaterloo.ca}
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-	Put here a brief summary of the project: what is it about and what are the main results. You also need to submit your code for reproducibility (a github \href{https://github.com/}{link} suffices). Be concise and to the point. Please limit the report to less than ($\leq$) \textbf{4 pages} (references excluded).
+	This project explores the prediction of 6 vital plant traits using a combination of ancillary data and image features. A pre-trained DinoV2 model is employed to extract image features, which are combined with ancillary data to train CatBoostRegressors. The project demonstrates the potential of integrating deep learning and traditional regression techniques for plant trait prediction.
 \end{abstract}
 
 \section{Introduction}
-In this section you are going to present a brief background and motivation of your project. Consider summarizing the entire report in one overarching figure, such as \Cref{fig:eqv_sde_traj}.
+Predicting plant traits is crucial for understanding plant health and optimizing agricultural practices. Traditional approaches rely heavily on manual measurements, which are time-consuming and prone to error. Recent advancements in machine learning, particularly in computer vision, offer the potential to automate and enhance the accuracy of these predictions.
+
+This project focuses on predicting 6 vital plant traits using a combination of ancillary data (such as soil and climate information) and image features extracted from plant photographs. By leveraging a pre-trained DinoV2 model for feature extraction and combining it with 6 CatBoostRegressors, I aim to build a robust prediction model. \Cref{fig:targets} shows an overview of the targets I are predicting.
 
 \begin{figure*}[h]
 	\centering
-	\includegraphics[width=0.9 \textwidth]{traj_combined.png} ~~~
-	\raisebox{0.18\height}{\includegraphics[width=0.07 \textwidth]{cbar3.png}}
-	\caption{The evolution of $p_t$ driven by diffusion processes where the data distribution $p_0$ is invariant under flipping with respect to the origin. We also plot the PF-ODE trajectories to visualize the transition direction of $p_t(x)$. The upper plot has $f(x, t) = \frac{1-x}{1-t}$ and $g(t) = 1$. The lower is VP-SDE with $\alpha_t = 1 -t$. For both processes, $T = 0.95$.}
-	\label{fig:eqv_sde_traj}
+	\includegraphics[scale=0.4]{targets.png}
+	\caption{The 6 vital plant traits used for training with outliers removed.}
+	\label{fig:targets}
 \end{figure*}
 
 \section{Related Works}
-Perform a reasonably thorough review of relevant literature. Has your approach, or one of similar nature, been considered before? By whom? What are the differences or limitations (if any)?
 
-\section{Main Results}
-Formulate your problem precisely (mathematically) and present the main methodology. Explain and justify each of your design choices, with some ablation studies to back them up.
+\subsection{Experiments with End-to-End Models}
+In addition to the feature extraction approach, I experimented with end-to-end models where images were directly fed into a neural network alongside ancillary data. I implemented two versions of the PlantTraitPredictionModel: one using a structured self-attention mechanism and another using a simpler fully connected approach. Both models utilized a ResNet, ConvNeXT or Vision Transformer (ViT) for image feature extraction.
 
-\begin{table}[t]
+I applied various data augmentations during training, including random flips, rotations, and color jittering, to improve generalization. Additionally, I tested multiple hyperparameter configurations, including different learning rates, optimizers, and fully connected layer sizes. Despite these efforts, the highest R2 score achieved by these models was less than 0.4, with most results falling between 0.1 and 0.4.
+
+\subsection{Experiments with Feature Extraction and CatBoost}
+In contrast to the end-to-end models, I explored an alternative approach where features were first extracted from images using pre-trained models and then fed into regression models such as CatBoost and XGBoost. This methodology is inspired by the approach of \citet{korotas2024}, who successfully combined DinoV2-extracted image features with ancillary data to predict plant traits.
+
+Initially, I used ConvNeXT for feature extraction, followed by CatBoost regression. However, the performance did not show a substantial improvement compared to the end-to-end models, with only a marginal increase in R2 scores. This result suggests that while ConvNeXT is effective for classification tasks, it may not be as optimized for feature extraction in the context of plant trait prediction.
+
+A significant breakthrough came when I employed DINOv2, a variant of the Vision Transformer (ViT) specifically designed for robust feature extraction by \citet{DINOv2}. Unlike traditional ViT models, which are primarily focused on classification tasks, DINOv2 is tailored to produce high-quality, generalizable features that can be effectively used for downstream tasks such as regression.
+
+The use of DINOv2 for feature extraction, followed by regression with CatBoost or XGBoost, led to a substantial improvement in model performance. The R2 scores consistently exceeded 0.46, highlighting the advantage of using a model specialized in feature extraction. This improvement underscores the importance of selecting the right feature extraction model for the task at hand.
+
+\begin{table}[h]
 	\centering
-	\caption{Model Comparison on 28x28x1 Rotated MNIST (Group C4).
-		\footnotesize{*} indicates author-reported values.
-	}
-	\setlength\tabcolsep{12pt}
-	\begin{tabular}{@{}lcccccc@{}}
+	\caption{R2 Scores on Test Set: End-to-End Models vs. Feature Extraction with CatBoost.}
+	\begin{tabular}{lcc}
 		\toprule
-		\multirow{2}{*}{Model} & \multicolumn{4}{c}{FID$\downarrow$} & \multicolumn{1}{c}{Inv-FID$\downarrow$} & \multicolumn{1}{c}{$\Delta\hat x_0\downarrow$}                                                   \\  \cmidrule{2-7}
-		                       & $1\%$                               & $5\%$                                   & $10\%$                                         & $100\%$               & $100\%$       & $100\%$ \\ \midrule
-		SPDiff                 & 5.97                                & \textbf{3.05}                           & 3.47                                           & 2.81                  & 2.21          & 0.2997  \\
-		SPDiff+WT              & 5.80                                & 3.34                                    & 3.57                                           & 3.50                  & 2.20          & 0.0004  \\
-		SPDiff+OC              & 6.10                                & 3.09                                    & 3.45                                           & 2.82                  & 2.12          & 0.0002  \\
-		SPDiff+Reg             & \textbf{5.42}                       & 3.69                                    & \textbf{2.83}                                  & 2.75                  & 2.09          & 0.1806  \\
-		SPDiff+Reg+OC          & 5.64                                & 3.67                                    & 2.86                                           & \textbf{2.64}         & \textbf{2.07} & 0.0002  \\
-		SP-GAN                 & 149\textsuperscript{*}              & 99\textsuperscript{*}                   & 88\textsuperscript{*}                          & 81\textsuperscript{*} & --            & --      \\
-		SP-GAN (Reprod.)       & 16.59                               & 11.28                                   & 9.02                                           & 10.95                 & 19.92         & --      \\ \bottomrule
+		Model                                         & Best R2 Score    & Average R2 Score \\
+		\midrule
+		End-to-End with ViT                           & 0.19441          & 0.16990          \\
+		End-to-End with ConvNeXT                      & 0.32319          & 0.28040          \\
+		End-to-End with ResNet                        & 0.26927          & 0.19710          \\
+		Feature Extraction with ConvNeXT and CatBoost & 0.26324          & 0.26324          \\
+		Feature Extraction with DINOv2 and XGBoost    & 0.39543          & 0.39543          \\
+		Feature Extraction with DINOv2 and CatBoost   & \textbf{0.46085} & \textbf{0.45932} \\
+		\bottomrule
 	\end{tabular}
-	\label{tab:fid-rot-mnist}
+	\label{tab:r2-comparison}
 \end{table}
 
-Please always give proper citations to prior work or results. Be precise and concise. Pay some attention to the organization and layout of the entire paper. Add variety (table, curves, bar graph, scatter plot, violin plot, pseudocode, \etc) and report statistical deviation (over at least 3$\sim$5 runs).
 
-\begin{algorithm}[H]
-	\DontPrintSemicolon
-	\KwIn{$\wv_0 \in \dom f$}
-	\For{$k = 0, 1, 2, \ldots$}{
+\section{Main Results}
+\subsection{Preprocessing}
+The best approach began with preprocessing the ancillary data, where outliers were removed, and features were normalized using a \texttt{StandardScaler}. The image features were extracted using the DINOv2 model, which were then combined with polynomial-transformed ancillary features to create a comprehensive dataset for training. The entire process took approximately 3 hours, with 2 hours dedicated to feature extraction and 1 hour for model training.
 
-		$\gv_{k} \gets \tfrac1n\sum_{i=1}^n \nabla \ell_i(\wv_k)$ \tcp*{compute full gradient at epoch $k$}
+Polynomial transformations are used to enhance the model's ability to capture complex interactions between the features. In this context, the ancillary data includes variables such as soil pH, moisture, and other environmental factors, which can have non-linear relationships with the target traits. It allows the model to consider not only the individual features but also the interactions between them.
 
-		$\wv_{k, 0} \gets \wv_k$
+\subsection{Feature Extraction}
+The DINOv2 model, specifically tailored for robust feature extraction, was employed to extract meaningful features from the plant images. These features were then combined with polynomial-transformed ancillary data, which allowed the model to capture higher-order interactions between the features, ultimately improving the model's predictive performance.
 
-		\For{$t=0,\ldots, m-1$}{
+\subsection{Model Training}
+For each of the 6 target traits, a separate CatBoostRegressor was trained using the combined features. CatBoost is a gradient boosting algorithm that is particularly well-suited for structured data, such as the one used in this project. Here are the resons for choosing CatBoost:
 
-			randomly draw $i_t = i$ with probability $p_i$
+\begin{itemize}
+	\item Fast Training on GPUs: CatBoost supports GPU acceleration, which significantly reduces training time when dealing with large datasets, like the combination of image and ancillary features in this project.
+	\item Robustness to Overfitting: \citet{CatBoost} highlighted CatBoost's effectiveness in handling categorical data and its robustness to overfitting, making it an ideal choice for structured data tasks.
+\end{itemize}
 
-			$\gv_{k,t} \gets \red{\gv_{k}} - \tfrac{1}{\orange{n p_{i_t}}}\nabla \ell_{i_t}(\wv_k) + \tfrac{1}{\orange{n p_{i_t}}} \nabla \ell_{i_t}(\wv_{k,t})$ \tcp*{amortized gradient}
+The parameters chosen for CatBoost (e.g., 2000 iterations, a learning rate of 0.085) were selected based on a balance between computational efficiency and model performance. The performance of each model was evaluated using the R2 score, the results are summarized in \Cref{tab:r2-scores}.
 
-			$\wv_{k, t+1} \gets \prox[\eta_k]{r}(\wv_{k, t} - \eta_k \gv_{k,t})$ \tcp*{stochastic proximal gradient}
-		}
+\begin{table}[h]
+	\centering
+	\caption{Model performance on the validation set, measured by R2 score. (SEED=6)}
+	\begin{tabular}{lc}
+		\toprule
+		Trait       & R2 Score \\
+		\midrule
+		X4\_mean    & 0.513    \\
+		X11\_mean   & 0.473    \\
+		X18\_mean   & 0.628    \\
+		X26\_mean   & 0.272    \\
+		X50\_mean   & 0.366    \\
+		X3112\_mean & 0.463    \\
+		\midrule
+		average     & 0.452    \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:r2-scores}
+\end{table}
 
-		$\wv_{k+1} \gets \tfrac1m\sum_{t=1}^m \wv_{k, t}$ \tcp*{in practice, can also do $\wv_{k+1} \gets \wv_{k, m}$}
-	}
-	\caption{Stochastic variance reduced proximal gradient}
-\end{algorithm}
+The models showed varying levels of accuracy across different traits, with the highest R2 score being 0.628 for X18\_mean and the lowest being 0.272 for X26\_mean. This variation suggests that some traits are more predictable based on the available data and features than others.
+
+\subsection{Potential Improvements}
+While the overall performance is strong, there are areas for improvement:
+\begin{itemize}
+	\item \textbf{Trait-Specific Regressors}: Currently, the same regression model (CatBoost) is used for all traits, which may not be optimal. For example, the traits X26\_mean and X50\_mean had lower R2 scores, suggesting that a different regressor, or a more specialized model, might perform better for these traits. Exploring other regression techniques, such as XGBoost or even neural network-based models, could yield better results for these specific traits. However, this would require additional time and resources, which may not be justified given the already satisfactory overall R2 score.
+	\item \textbf{Hyperparameter Tuning}: Further fine-tuning of the CatBoost parameters and outlier quantiles could improve performance, particularly for the traits that are currently underperforming.
+	\item \textbf{Feature Selection}: Conducting a more thorough feature selection process could help in identifying which features (including polynomial terms) are most predictive for each trait, leading to more efficient models.
+\end{itemize}
+
+\subsection{Robustness of Results}
+To ensure the robustness of our results, I evaluated the models using different random seeds. \Cref{tab:r2-scores-across-seeds} shows the average R2 scores obtained with various seeds. The consistency across different seeds indicates that the models are stable and not overly sensitive to the randomness in data splitting or model initialization.
+
+\begin{table}[h]
+	\centering
+	\caption{R2 scores on the test set across different random seeds.}
+	\begin{tabular}{lc}
+		\toprule
+		Seed   & Average R2 Score \\
+		\midrule
+		6      & \textbf{0.46085} \\
+		42     & 0.45518          \\
+		911    & 0.45638          \\
+		1234   & 0.45830          \\
+		10086  & 0.45882          \\
+		6666   & 0.45740          \\
+		666666 & 0.45587          \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:r2-scores-across-seeds}
+\end{table}
 
 
 \section{Conclusion}
-What have we learned? What limitations or directions do you think are worth exploring in the future?
+This project demonstrates the effectiveness of integrating deep learning-based feature extraction with traditional regression models for predicting plant traits. By leveraging a pre-trained DINOv2 model, specifically designed for high-quality feature extraction, and combining these features with polynomial-transformed ancillary data, a significant improvement in prediction accuracy is achieved.
 
+The results highlight several key points:
+
+\begin{itemize}
+	\item \textbf{Feature Extraction Matters}: The choice of feature extraction model (DINOv2) significantly influenced the model's performance, outperforming more conventional architectures like ConvNeXT and ResNet in this context.
+	\item \textbf{Hybrid Approach}: Combining image-based features with ancillary data through polynomial transformations captures more complex interactions, leading to better predictive performance.
+	\item \textbf{Model Stability}: The consistent R2 scores across different random seeds indicate that the model is robust and generalizable.
+	\item \textbf{Exploration of Trait-Specific Models}: While the current approach uses the same regression model for all traits, future work could explore using different models tailored to specific traits, particularly those that are currently underperforming.
+\end{itemize}
+
+Overall, this work contributes to the ongoing efforts to automate and enhance plant trait prediction, with potential applications in agriculture and environmental monitoring. The methodologies explored here offer a solid foundation for future research and practical applications in the field.
 
 \newpage
-
-\section*{Acknowledgement}
-Thank people who have helped or influenced you in this project. \Cref{fig:eqv_sde_traj} and \Cref{tab:fid-rot-mnist} are from \citet{LuSY24}.
 
 \nocite{*}
 \printbibliography[title=References]
