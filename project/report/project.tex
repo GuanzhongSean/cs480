@@ -37,7 +37,7 @@
 \section{Introduction}
 Predicting plant traits is crucial for understanding plant health and optimizing agricultural practices. Traditional approaches rely heavily on manual measurements, which are time-consuming and prone to error. Recent advancements in machine learning, particularly in computer vision, offer the potential to automate and enhance the accuracy of these predictions.
 
-This project focuses on predicting 6 vital plant traits using a combination of ancillary data (such as soil and climate information) and image features extracted from plant photographs. By leveraging a pre-trained DinoV2 model for feature extraction and combining it with 6 CatBoostRegressors, I aim to build a robust prediction model. \Cref{fig:targets} shows an overview of the targets I are predicting.
+This project focuses on predicting 6 vital plant traits using a combination of ancillary data (such as soil and climate information) and image features extracted from plant photographs. A robust prediction model is built by leveraging a pre-trained DinoV2 model for feature extraction and combining it with 6 CatBoostRegressors. \Cref{fig:targets} shows the distribution of the targets I are predicting.
 
 \begin{figure*}[h]
 	\centering
@@ -49,12 +49,12 @@ This project focuses on predicting 6 vital plant traits using a combination of a
 \section{Related Works}
 
 \subsection{Experiments with End-to-End Models}
-In addition to the feature extraction approach, I experimented with end-to-end models where images were directly fed into a neural network alongside ancillary data. I implemented two versions of the PlantTraitPredictionModel: one using a structured self-attention mechanism and another using a simpler fully connected approach. Both models utilized a ResNet, ConvNeXT or Vision Transformer (ViT) for image feature extraction.
+In addition to the feature extraction approach, I experimented with end-to-end models where images are directly fed into a neural network alongside ancillary data. I implemented two versions of the PlantTraitPredictionModel: one using a structured self-attention mechanism and another using a simpler fully connected approach. Both models utilized a ResNet, ConvNeXT or Vision Transformer (ViT) for image feature extraction.
 
-I applied various data augmentations during training, including random flips, rotations, and color jittering, to improve generalization. Additionally, I tested multiple hyperparameter configurations, including different learning rates, optimizers, and fully connected layer sizes. Despite these efforts, the highest R2 score achieved by these models was less than 0.4, with most results falling between 0.1 and 0.4.
+I applied various data augmentations during training, including random flips, rotations, and color jittering, to improve generalization. Additionally, I tested multiple hyperparameter configurations, including different learning rates, optimizers, and fully connected layer sizes. Despite these efforts, the highest R2 score achieved by these models is less than 0.4, with most results falling between 0.1 and 0.4.
 
 \subsection{Experiments with Feature Extraction and CatBoost}
-In contrast to the end-to-end models, I explored an alternative approach where features were first extracted from images using pre-trained models and then fed into regression models such as CatBoost and XGBoost. This methodology is inspired by the approach of \citet{korotas2024}, who successfully combined DinoV2-extracted image features with ancillary data to predict plant traits.
+In contrast to the end-to-end models, I explored an alternative approach where features are first extracted from images using pre-trained models and then fed into regression models such as CatBoost and XGBoost. This methodology is inspired by the approach of \citet{korotas2024}, who successfully combined DinoV2-extracted image features with ancillary data to predict plant traits.
 
 Initially, I used ConvNeXT for feature extraction, followed by CatBoost regression. However, the performance did not show a substantial improvement compared to the end-to-end models, with only a marginal increase in R2 scores. This result suggests that while ConvNeXT is effective for classification tasks, it may not be as optimized for feature extraction in the context of plant trait prediction.
 
@@ -83,22 +83,22 @@ The use of DINOv2 for feature extraction, followed by regression with CatBoost o
 
 \section{Main Results}
 \subsection{Preprocessing}
-The best approach began with preprocessing the ancillary data, where outliers were removed, and features were normalized using a \texttt{StandardScaler}. The image features were extracted using the DINOv2 model, which were then combined with polynomial-transformed ancillary features to create a comprehensive dataset for training. The entire process took approximately 3 hours, with 2 hours dedicated to feature extraction and 1 hour for model training.
+The feature extraction approach begins with preprocessing the ancillary data, where outliers are removed, and features are normalized using a \texttt{StandardScaler}. The image features are extracted using the DINOv2 model, which are then combined with polynomial-transformed ancillary features to create a comprehensive dataset for training. The entire process took approximately 3 hours, with 2 hours dedicated to feature extraction and 1 hour for model training.
 
 Polynomial transformations are used to enhance the model's ability to capture complex interactions between the features. In this context, the ancillary data includes variables such as soil pH, moisture, and other environmental factors, which can have non-linear relationships with the target traits. It allows the model to consider not only the individual features but also the interactions between them.
 
 \subsection{Feature Extraction}
-The DINOv2 model, specifically tailored for robust feature extraction, was employed to extract meaningful features from the plant images. These features were then combined with polynomial-transformed ancillary data, which allowed the model to capture higher-order interactions between the features, ultimately improving the model's predictive performance.
+The DINOv2 model, specifically tailored for robust feature extraction, is employed to extract meaningful features from the plant images. These features are then combined with polynomial-transformed ancillary data, which allowed the model to capture higher-order interactions between the features, ultimately improving the model's predictive performance.
 
 \subsection{Model Training}
-For each of the 6 target traits, a separate CatBoostRegressor was trained using the combined features. CatBoost is a gradient boosting algorithm that is particularly well-suited for structured data, such as the one used in this project. Here are the resons for choosing CatBoost:
+For each of the 6 target traits, a separate CatBoostRegressor is trained using the combined features. CatBoost is a gradient boosting algorithm that is particularly well-suited for structured data, such as the one used in this project. Here are the resons for choosing CatBoost:
 
 \begin{itemize}
 	\item Fast Training on GPUs: CatBoost supports GPU acceleration, which significantly reduces training time when dealing with large datasets, like the combination of image and ancillary features in this project.
 	\item Robustness to Overfitting: \citet{CatBoost} highlighted CatBoost's effectiveness in handling categorical data and its robustness to overfitting, making it an ideal choice for structured data tasks.
 \end{itemize}
 
-The parameters chosen for CatBoost (e.g., 2000 iterations, a learning rate of 0.085) were selected based on a balance between computational efficiency and model performance. The performance of each model was evaluated using the R2 score, the results are summarized in \Cref{tab:r2-scores}.
+The parameters chosen for CatBoost (e.g., 2000 iterations, a learning rate of 0.085) are selected based on a balance between computational efficiency and model performance. The performance of each model is evaluated using the R2 score, the results are summarized in \Cref{tab:r2-scores}.
 
 \begin{table}[h]
 	\centering
@@ -165,7 +165,7 @@ The results highlight several key points:
 	\item \textbf{Exploration of Trait-Specific Models}: While the current approach uses the same regression model for all traits, future work could explore using different models tailored to specific traits, particularly those that are currently underperforming.
 \end{itemize}
 
-Overall, this work contributes to the ongoing efforts to automate and enhance plant trait prediction, with potential applications in agriculture and environmental monitoring. The methodologies explored here offer a solid foundation for future research and practical applications in the field.
+Overall, this project contributes to the ongoing efforts to automate and enhance plant trait prediction, with potential applications in agriculture and environmental monitoring.
 
 \newpage
 
